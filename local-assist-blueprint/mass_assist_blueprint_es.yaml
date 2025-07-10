@@ -186,17 +186,14 @@ actions:
         media_type: "{{ 'radio' if 'radio' in (media_name | default('') | lower) else trigger_id }}"
         artist: "{{ trigger.slots.artist | default }}"
         radio_mode: "{{ 'radio' in trigger.slots.radio_mode | default | lower }}"
+      ma_players: '{{  integration_entities(''music_assistant'') | select(''match'', 'media_player'') | list }}'
       player_entity_id_by_player_name: >
-        {{ integration_entities('music_assistant') | expand 
-          | selectattr('name', 'match', area_or_player_name ~ '$', ignorecase=true)
-          | map(attribute='entity_id') | list }}
+        {{ ma_players | expand | selectattr('name', 'match', area_or_player_name ~ '$', ignorecase=true) | map(attribute='entity_id') | list }}
       player_entity_id_by_area_name: >
-        {{ areas() | map('area_name') | select('match', area_or_player_name ~ '$', 
-        ignorecase=true) | map('area_entities') | sum(start=[]) | select('in', 
-        integration_entities('music_assistant')) | list }}
+        {{ areas() | map(''area_name'') | select(''match'',area_or_player_name ~ ''$'',  ignorecase=true) | map(''area_entities'') | sum(start=[])
+        | select(''in'',  ma_players) | list }}
       player_entity_id_by_assist_area: >
-        {{ area_entities(area_id(trigger.device_id))
-        | select('in', integration_entities('music_assistant')) | list }}
+        {{ area_entities(area_id(trigger.device_id)) | select(''in'', ma_players) | list }}
       mass_player_entity_id: |
         {{ player_entity_id_by_player_name or player_entity_id_by_area_name 
         or player_entity_id_by_assist_area or [default_player_entity_id] }}
